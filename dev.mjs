@@ -22,9 +22,10 @@ globalThis.fetch = async (url, opt = {}) => {
     if (u.endsWith("/token/")) return Response.json({ access_token: "dev", expires_in: 36000 });
     const email = new URL(u).searchParams.get("customer");
     const paid = (process.env.DEV_PAID || "aluno@teste.com").split(",");
-    const todos = [...new Set(JSON.parse(readFileSync("content/cursos.json", "utf8")).flatMap((c) => c.produtos))];
+    const todos = [...new Set(JSON.parse(readFileSync("content/cursos.json", "utf8")).flatMap((c) => [...(c.produtos || []), ...(c.checkouts || [])]))];
     const produtos = process.env.DEV_PRODUCTS ? process.env.DEV_PRODUCTS.split(",") : todos;
-    const results = paid.includes(email) ? produtos.map((id) => ({ status: "paid", customer: { email }, product: { id } })) : [];
+    // Cada id simulado vale como produto e como número de checkout.
+    const results = paid.includes(email) ? produtos.map((id) => ({ status: "paid", customer: { email }, product: { id }, checkout: id })) : [];
     return Response.json({ count: results.length, results });
   }
   return realFetch(url, opt);

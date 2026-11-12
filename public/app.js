@@ -189,7 +189,7 @@ async function fetchInParts(url, onProgress) {
   let start = 0, total = Infinity;
   while (start < total) {
     const r = await fetch(url, { headers: { Range: `bytes=${start}-` }, credentials: "same-origin" });
-    if (r.status === 401) { location.href = "/?erro=sessao"; throw new Error("401"); }
+    if (r.status === 401) { location.href = "/entrar?erro=sessao"; throw new Error("401"); }
     if (!r.ok) throw new Error(r.status);
     const buf = new Uint8Array(await r.arrayBuffer());
     const range = /\/(\d+)$/.exec(r.headers.get("Content-Range") || "");
@@ -206,11 +206,12 @@ async function fetchInParts(url, onProgress) {
 const ICON_PREV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
 const ICON_NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 
-async function setupLeitor(el, url, key) {
+async function setupLeitor(el, url, key, nome) {
   el.innerHTML = `<div class="leitor__bar">
       <button class="icon-btn js-prev" type="button" aria-label="Página anterior">${ICON_PREV}</button>
       <label class="leitor__pag">Página <input class="js-pag" type="number" min="1" value="1" inputmode="numeric" aria-label="Número da página"> de <span class="js-total">…</span></label>
       <button class="icon-btn js-next" type="button" aria-label="Próxima página">${ICON_NEXT}</button>
+      <button class="chip leitor__baixar js-baixar" type="button" disabled>⬇ Baixar PDF</button>
       <span class="leitor__zoom">
         <button class="icon-btn js-zout" type="button" aria-label="Diminuir texto">A−</button>
         <button class="icon-btn js-zin" type="button" aria-label="Aumentar texto">A+</button>
@@ -227,6 +228,15 @@ async function setupLeitor(el, url, key) {
     return;
   }
   $(".js-total", el).textContent = pdf.numPages;
+  const baixar = $(".js-baixar", el);
+  baixar.disabled = false;
+  baixar.addEventListener("click", async () => { // salva o arquivo que já foi carregado para a leitura
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([await pdf.getData()], { type: "application/pdf" }));
+    a.download = `${nome}.pdf`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  });
   pagIn.max = pdf.numPages;
   page = Math.min(page, pdf.numPages);
   const render = async () => {
@@ -294,7 +304,7 @@ const CHECK ='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 
 async function api(url) {
   const r = await fetch(url, { credentials: "same-origin" });
-  if (r.status === 401) { location.href = "/?erro=sessao"; throw new Error("401"); }
+  if (r.status === 401) { location.href = "/entrar?erro=sessao"; throw new Error("401"); }
   if (!r.ok) throw new Error(r.status);
   return r.json();
 }
@@ -415,7 +425,7 @@ async function setupPainel() {
     enhanceVideos(md$);
     enhanceImages(md$);
     enhanceAudio(md$, `audio:${data.email}`);
-    md$.querySelectorAll(".leitor[data-pdf]").forEach((el) => setupLeitor(el, mediaUrl(c.cid, el.dataset.pdf), `pagina:${data.email}:${c.cid}:${id}`));
+    md$.querySelectorAll(".leitor[data-pdf]").forEach((el) => setupLeitor(el, mediaUrl(c.cid, el.dataset.pdf), `pagina:${data.email}:${c.cid}:${id}`, c.curso.titulo.replace(/[\/:*?"<>|]/g, "")));
     md$.querySelectorAll("pre").forEach((pre) => {
       const b = document.createElement("button");
       b.className = "copy"; b.type = "button"; b.textContent = "Copiar";
@@ -456,7 +466,7 @@ async function setupPainel() {
   });
   $(".js-sair").addEventListener("click", async () => {
     await fetch("/api/sair", { method: "POST" }).catch(() => {});
-    location.href = "/";
+    location.href = "/entrar";
   });
 }
 

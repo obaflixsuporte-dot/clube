@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const q = new URL(req.url, "http://x").searchParams;
   const id = q.get("curso");
   if (!id) {
-    const cursos = CURSOS.map(({ produtos, ...c }) => ({ ...c, liberado: s.cursos.includes(c.id) }));
+    const cursos = CURSOS.map(({ produtos, checkouts, ...c }) => ({ ...c, liberado: s.cursos.includes(c.id) }));
     return send(res, 200, { email: s.email, cursos });
   }
   const curso = CURSOS.find((c) => c.id === id);

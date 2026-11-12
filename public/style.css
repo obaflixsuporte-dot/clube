@@ -177,6 +177,7 @@ img, video { display: block; max-width: 100%; height: auto; }
 .leitor__pag { display: inline-flex; align-items: center; gap: .4rem; font-weight: 600; font-size: .95rem; }
 .leitor__pag input { width: 3.6rem; padding: .3rem .4rem; font: inherit; text-align: center; color: var(--texto-cor); background: var(--fundo); border: 2px solid var(--borda); border-radius: 10px; }
 .leitor__zoom { display: inline-flex; gap: .4rem; }
+.leitor__baixar:disabled { opacity: .5; cursor: wait; }
 .leitor__zoom .icon-btn { font: 700 .85rem var(--fonte); }
 .leitor__pagina { overflow: auto; border-radius: 12px; touch-action: pan-y pinch-zoom; }
 .leitor__pagina.is-zoom { touch-action: auto; }

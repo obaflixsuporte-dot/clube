@@ -3,35 +3,46 @@
     "id": "paulo-proposito",
     "titulo": "De Perseguidor a Apóstolo: o propósito de Paulo",
     "descricao": "Como Saulo, o perseguidor, se tornou Paulo, o apóstolo. Estudo grátis para começar.",
-    "gratis": true,
-    "produtos": []
+    "gratis": true
   },
   {
     "id": "cartas-de-paulo",
     "titulo": "Cartas de Paulo Reveladas",
     "descricao": "Estudo completo das cartas de Paulo, com audiobook para ouvir onde estiver.",
-    "produtos": ["ID_ASSINATURA_CLUBE", "ID_AVULSO_CARTAS_DE_PAULO"],
-    "checkout": ""
+    "checkouts": [
+      "1316557",
+      "1316594"
+    ],
+    "checkout": "https://pay.cakto.com.br/w4kx3yd_1316557"
   },
   {
     "id": "davi",
-    "titulo": "Vencendo Gigantes como Davi",
-    "descricao": "Lições da vida de Davi para enfrentar os gigantes do dia a dia.",
-    "produtos": ["ID_ASSINATURA_CLUBE", "ID_AVULSO_DAVI"],
-    "checkout": ""
+    "titulo": "O Método de Davi",
+    "descricao": "Como vencer seus gigantes e crescer na vida com fé.",
+    "checkouts": [
+      "1316569",
+      "1316594"
+    ],
+    "checkout": "https://pay.cakto.com.br/35b5c4w_1316569"
   },
   {
     "id": "neemias",
-    "titulo": "Reconstruindo a Vida como Neemias",
-    "descricao": "Como Neemias reconstruiu os muros de Jerusalém, e o que isso ensina sobre recomeçar.",
-    "produtos": ["ID_ASSINATURA_CLUBE", "ID_AVULSO_NEEMIAS"],
-    "checkout": ""
+    "titulo": "O Método de Neemias",
+    "descricao": "Como reconstruir sua vida mesmo quando tudo parece perdido.",
+    "checkouts": [
+      "1316583",
+      "1316594"
+    ],
+    "checkout": "https://pay.cakto.com.br/3e385ke_1316583"
   },
   {
     "id": "jose",
-    "titulo": "O Código de José para a Prosperidade",
-    "descricao": "Da cova ao palácio: os princípios da história de José.",
-    "produtos": ["ID_ASSINATURA_CLUBE", "ID_AVULSO_JOSE"],
-    "checkout": ""
+    "titulo": "O Código de José",
+    "descricao": "Como prosperar mesmo em tempos de crise.",
+    "checkouts": [
+      "1316589",
+      "1316594"
+    ],
+    "checkout": "https://pay.cakto.com.br/3fb2o56_1316589"
   }
 ]
