@@ -1,0 +1,13 @@
+[
+  {
+    "id": "davi",
+    "titulo": "Estudo",
+    "descricao": "",
+    "aulas": [
+      {
+        "id": "davi-ler",
+        "titulo": "Ler o estudo"
+      }
+    ]
+  }
+]

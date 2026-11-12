@@ -1,0 +1,17 @@
+[
+  {
+    "id": "cartas-de-paulo",
+    "titulo": "Estudo",
+    "descricao": "",
+    "aulas": [
+      {
+        "id": "cartas-de-paulo-ler",
+        "titulo": "Ler o estudo"
+      },
+      {
+        "id": "cartas-de-paulo-ouvir",
+        "titulo": "Ouvir o audiobook"
+      }
+    ]
+  }
+]

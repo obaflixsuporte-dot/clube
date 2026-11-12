@@ -1,0 +1,13 @@
+[
+  {
+    "id": "neemias",
+    "titulo": "Estudo",
+    "descricao": "",
+    "aulas": [
+      {
+        "id": "neemias-ler",
+        "titulo": "Ler o estudo"
+      }
+    ]
+  }
+]

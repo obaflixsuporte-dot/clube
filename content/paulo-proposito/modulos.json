@@ -1,0 +1,13 @@
+[
+  {
+    "id": "paulo-proposito",
+    "titulo": "Estudo",
+    "descricao": "",
+    "aulas": [
+      {
+        "id": "paulo-proposito-ler",
+        "titulo": "Ler o estudo"
+      }
+    ]
+  }
+]
