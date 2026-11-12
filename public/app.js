@@ -206,18 +206,25 @@ async function fetchInParts(url, onProgress) {
 const ICON_PREV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
 const ICON_NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 
-async function setupLeitor(el, url, key, nome) {
+async function setupLeitor(el, url, key, nome, marcarLido) {
   el.innerHTML = `<div class="leitor__bar">
+      <button class="chip leitor__voltar so-modo js-sair-modo" type="button">← Voltar</button>
       <button class="icon-btn js-prev" type="button" aria-label="Página anterior">${ICON_PREV}</button>
       <label class="leitor__pag">Página <input class="js-pag" type="number" min="1" value="1" inputmode="numeric" aria-label="Número da página"> de <span class="js-total">…</span></label>
       <button class="icon-btn js-next" type="button" aria-label="Próxima página">${ICON_NEXT}</button>
-      <button class="chip leitor__baixar js-baixar" type="button" disabled>⬇ Baixar PDF</button>
-      <span class="leitor__zoom">
-        <button class="icon-btn js-zout" type="button" aria-label="Diminuir texto">A−</button>
-        <button class="icon-btn js-zin" type="button" aria-label="Aumentar texto">A+</button>
+      <button class="chip chip--forte fora-modo js-modo" type="button" disabled>📖 Modo leitura</button>
+      <span class="leitor__zoom so-modo">
+        <button class="icon-btn js-zout" type="button" aria-label="Diminuir zoom">A−</button>
+        <button class="icon-btn js-zin" type="button" aria-label="Aumentar zoom">A+</button>
       </span>
+      <button class="chip leitor__baixar js-baixar" type="button" disabled>⬇ Baixar</button>
+      <button class="chip so-modo js-lido" type="button">✓ Marcar como lido</button>
     </div>
-    <div class="leitor__pagina"><p class="loading js-load">Carregando o estudo… 0%</p><canvas hidden></canvas></div>`;
+    <div class="leitor__pagina"><p class="loading js-load">Carregando o estudo… 0%</p><canvas hidden></canvas></div>
+    <div class="leitor__rodape so-modo">
+      <button class="botao-nav js-prev" type="button">← Anterior</button>
+      <button class="botao-nav js-next" type="button">Próxima →</button>
+    </div>`;
   const canvas = $("canvas", el), pagIn = $(".js-pag", el), load = $(".js-load", el), box = $(".leitor__pagina", el);
   let pdf, page = Math.max(1, +(store.get(key) || 1)), zoom = 1, rendering = null;
   try {
@@ -239,31 +246,68 @@ async function setupLeitor(el, url, key, nome) {
   });
   pagIn.max = pdf.numPages;
   page = Math.min(page, pdf.numPages);
+  const modo = () => el.classList.contains("is-modo");
   const render = async () => {
     if (rendering) await rendering.promise.catch(() => {});
     const p = await pdf.getPage(page);
     const base = p.getViewport({ scale: 1 });
-    const vp = p.getViewport({ scale: (box.clientWidth / base.width) * zoom });
+    const largura = modo() ? Math.min(box.clientWidth - 16, 900) : box.clientWidth; // no modo leitura a página não passa de 900 px
+    const vp = p.getViewport({ scale: (largura / base.width) * zoom });
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.floor(vp.width * dpr); canvas.height = Math.floor(vp.height * dpr);
     canvas.style.width = `${Math.floor(vp.width)}px`;
+    canvas.style.transform = "";
     rendering = p.render({ canvasContext: canvas.getContext("2d"), viewport: vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null });
     await rendering.promise.catch(() => {});
     canvas.hidden = false; load.hidden = true;
     pagIn.value = page;
     store.set(key, page); // lembra onde parou
   };
-  const go = (n) => { n = Math.min(pdf.numPages, Math.max(1, n)); if (n === page) return; page = n; render(); el.scrollIntoView({ block: "start", behavior: "smooth" }); };
-  $(".js-prev", el).addEventListener("click", () => go(page - 1));
-  $(".js-next", el).addEventListener("click", () => go(page + 1));
+  const topo = () => (modo() ? box.scrollTo({ top: 0 }) : el.scrollIntoView({ block: "start", behavior: "smooth" }));
+  const go = (n) => { n = Math.min(pdf.numPages, Math.max(1, n)); if (n === page) return; page = n; render(); topo(); };
+  const setZoom = (z) => { zoom = Math.min(3, Math.max(1, Math.round(z * 4) / 4)); box.classList.toggle("is-zoom", zoom > 1); render(); };
+  el.querySelectorAll(".js-prev").forEach((b) => b.addEventListener("click", () => go(page - 1)));
+  el.querySelectorAll(".js-next").forEach((b) => b.addEventListener("click", () => go(page + 1)));
   pagIn.addEventListener("change", () => go(+pagIn.value || 1));
-  $(".js-zin", el).addEventListener("click", () => { zoom = Math.min(2.5, zoom + 0.25); box.classList.toggle("is-zoom", zoom > 1); render(); });
-  $(".js-zout", el).addEventListener("click", () => { zoom = Math.max(1, zoom - 0.25); box.classList.toggle("is-zoom", zoom > 1); render(); });
-  el.addEventListener("keydown", (e) => { if (e.target === pagIn) return; if (e.key === "ArrowRight") go(page + 1); if (e.key === "ArrowLeft") go(page - 1); });
-  // Troca de página com o dedo (sem zoom).
-  let sx = null;
-  box.addEventListener("touchstart", (e) => { sx = zoom === 1 && e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
-  box.addEventListener("touchend", (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 60) go(page + (dx < 0 ? 1 : -1)); sx = null; });
+  $(".js-zin", el).addEventListener("click", () => setZoom(zoom + 0.25));
+  $(".js-zout", el).addEventListener("click", () => setZoom(zoom - 0.25));
+
+  // Modo leitura: o estudo ocupa a tela toda; "Voltar" e o botão voltar do celular fecham.
+  const entrar = () => { if (modo()) return; el.classList.add("is-modo"); document.body.classList.add("lendo"); history.pushState({ leitura: 1 }, ""); render(); };
+  const sair = () => { if (!modo()) return; el.classList.remove("is-modo"); document.body.classList.remove("lendo"); setZoom(1); };
+  const modoBtn = $(".js-modo", el);
+  modoBtn.disabled = false;
+  modoBtn.addEventListener("click", entrar);
+  $(".js-sair-modo", el).addEventListener("click", () => history.back());
+  addEventListener("popstate", sair);
+  $(".js-lido", el).addEventListener("click", () => { history.back(); setTimeout(marcarLido, 50); });
+  el.addEventListener("keydown", (e) => {
+    if (e.target === pagIn) return;
+    if (e.key === "ArrowRight") go(page + 1);
+    if (e.key === "ArrowLeft") go(page - 1);
+    if (e.key === "Escape" && modo()) history.back();
+  });
+
+  // Gestos só no PDF: pinça aproxima a página (não a tela toda); deslizar troca de página sem zoom.
+  let sx = null, pinca = null;
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  box.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) { pinca = { d: dist(e.touches), z: zoom, r: 1 }; sx = null; }
+    else sx = zoom === 1 && e.touches.length === 1 ? e.touches[0].clientX : null;
+  }, { passive: true });
+  box.addEventListener("touchmove", (e) => {
+    if (!pinca || e.touches.length !== 2) return;
+    e.preventDefault();
+    pinca.r = dist(e.touches) / pinca.d;
+    canvas.style.transform = `scale(${Math.min(3 / pinca.z, Math.max(1 / pinca.z, pinca.r))})`;
+  }, { passive: false });
+  box.addEventListener("touchend", (e) => {
+    if (pinca) { if (e.touches.length < 2) { const p = pinca; pinca = null; setZoom(p.z * p.r); } return; }
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 60) go(page + (dx < 0 ? 1 : -1));
+    sx = null;
+  });
   let w = box.clientWidth;
   new ResizeObserver(() => { if (Math.abs(box.clientWidth - w) > 20) { w = box.clientWidth; render(); } }).observe(box);
   await render();
@@ -425,7 +469,7 @@ async function setupPainel() {
     enhanceVideos(md$);
     enhanceImages(md$);
     enhanceAudio(md$, `audio:${data.email}`);
-    md$.querySelectorAll(".leitor[data-pdf]").forEach((el) => setupLeitor(el, mediaUrl(c.cid, el.dataset.pdf), `pagina:${data.email}:${c.cid}:${id}`, c.curso.titulo.replace(/[\/:*?"<>|]/g, "")));
+    md$.querySelectorAll(".leitor[data-pdf]").forEach((el) => setupLeitor(el, mediaUrl(c.cid, el.dataset.pdf), `pagina:${data.email}:${c.cid}:${id}`, c.curso.titulo.replace(/[\/:*?"<>|]/g, ""), () => $(".js-done:not([aria-pressed=\"true\"])", main)?.click()));
     md$.querySelectorAll("pre").forEach((pre) => {
       const b = document.createElement("button");
       b.className = "copy"; b.type = "button"; b.textContent = "Copiar";
